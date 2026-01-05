@@ -13,10 +13,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.9
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: "3.12"
 
     - name: Install dependencies
       run: |
@@ -41,4 +41,5 @@ jobs:
         touch models/best.onnx 
         # Note: The actual API text might fail if it tries to load this dummy ONNX.
         # So we should probably mock the InferenceSession in our tests.
-        pytest src/tests/
+        # So we should probably mock the InferenceSession in our tests.
+        PYTHONPATH=. pytest src/tests/
