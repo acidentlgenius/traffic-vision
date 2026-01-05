@@ -33,15 +33,57 @@ graph TD
     subgraph "MLOps Platform (The Brain)"
         D -->|Alert: Drift Detected!| E{Airflow Orchestrator}
         
-        E -->|Trigger| F[1. Ingest Drifted Data]
-        F -->|Fetch Labels| G[2. Simulated Active Learning]
-        G -->|New Dataset| H[3. Retrain YOLOv8 Model]
-        H -->|New Weights| I[4. Register Model V2 (MLflow)]
+        E -->|Trigger| F["1. Ingest Drifted Data"]
+        F -->|Fetch Labels| G["2. Simulated Active Learning"]
+        G -->|New Dataset| H["3. Retrain YOLOv8 Model"]
+        H -->|New Weights| I["4. Register Model V2 (MLflow)"]
     end
 
     I -->|Deploy| B
-    style D fill:#f96,stroke:#333,stroke-width:2px
-    style E fill:#00C7B7,stroke:#fff,stroke-width:2px
+    classDef monitor fill:#ff9966,stroke:#333333,stroke-width:2px;
+    classDef orchestrator fill:#00c7b7,stroke:#333333,stroke-width:2px;
+    class D monitor;
+    class E orchestrator;
+```
+
+### 🏗️ Infrastructure Architecture (Docker Services)
+
+```mermaid
+graph TD
+    subgraph "Client Layer"
+        User[User / Simulation Script]
+    end
+
+    subgraph "Traffic Vision Stack (Docker)"
+        direction TB
+        
+        subgraph "Serving Layer"
+            API["API Service<br/>(FastAPI :8000)"]
+        end
+        
+        subgraph "Observability Layer"
+            Prom[Prometheus :9090]
+            Graf[Grafana :3001]
+        end
+        
+        subgraph "Orchestration Layer (Airflow)"
+            Web[Webserver :8080]
+            Sched[Scheduler]
+            DB[(Postgres DB)]
+        end
+    end
+
+    User -->|HTTP POST Image| API
+    Graf -->|Query Metrics| Prom
+    Prom -.->|Scrape| API
+    
+    Web -->|Read/Write| DB
+    Sched -->|Read/Write| DB
+    
+    classDef container fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+    classDef db fill:#fff9c4,stroke:#fbc02d,stroke-width:2px;
+    class API,Prom,Graf,Web,Sched container;
+    class DB db;
 ```
 
 ---
