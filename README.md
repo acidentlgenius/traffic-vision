@@ -14,7 +14,7 @@
 ## 🎥 Demo
 *See the system in action: Detecting drift and retraining automatically.*
 
-![System Demo Placeholder](docs/assets/airflow-recording.mov)
+![System Demo Placeholder](docs/assets/airflow-recording.gif)
 
 ---
 
