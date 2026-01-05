@@ -56,4 +56,11 @@ with DAG(
         bash_command='echo "Model trained and registered successfully!"'
     )
 
-    validate_data >> train_model >> notify_success
+    # Task 4: Hot Swap Model in Production
+    # Triggers the /reload endpoint on the API container
+    hot_swap_model = BashOperator(
+        task_id='hot_swap_model',
+        bash_command='curl -X POST http://api:8000/reload || echo "Failed to reload model, API might be down"'
+    )
+
+    validate_data >> train_model >> notify_success >> hot_swap_model

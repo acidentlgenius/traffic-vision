@@ -102,3 +102,13 @@ async def predict(file: UploadFile = File(...)):
         
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/reload")
+async def reload_model_endpoint():
+    """Hot-swap endpoint to reload the model from disk."""
+    logging.info("Reloading model due to drift detection...")
+    try:
+        load_model()
+        return {"status": "success", "message": "Model reloaded successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reload model: {e}")

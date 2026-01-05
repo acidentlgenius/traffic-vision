@@ -43,7 +43,8 @@ The defining feature of Traffic Vision is its ability to adapt.
 2.  **Drift Injection**: "Night" data is fed to the inference service to simulate environmental change.
 3.  **Detection**: **Evidently AI** detects the distribution shift in image characteristics and model confidence.
 4.  **Trigger**: An Airflow DAG is triggered automatically. It augments the training set with the "Night" data (simulated labeling) and retrains the model.
-5.  **Result**: A V2 model is deployed that creates accurate detections in both day and night conditions.
+5.  **Hot-Swap**: The pipeline triggers a zero-downtime reload of the inference service via a specialized API endpoint.
+6.  **Result**: A V2 model is deployed that creates accurate detections in both day and night conditions, without restarting containers.
 
 ### 🚀 CI/CD Implementation
 We strictly separate "Code Validation" from "Model Training":
@@ -59,8 +60,8 @@ This project serves as a practical demonstration of key MLOps skills:
 | **Design & maintain ML infrastructure and pipelines** | Architected a modular system using **Docker Compose** to orchestrate Airflow, MLflow, and API services locally, simulating a distributed production environment. |
 | **Automate deployment & monitoring** | Implemented **GitHub Actions** for CI/CD of the serving app and **Evidently AI** for real-time performance and drift monitoring. |
 | **Model versioning & reproducibility** | integrated **DVC** for dataset versioning and **MLflow** for tracking experiments and registering model versions, ensuring every result is reproducible. |
-| **Collaborate to transition prototypes to production** | Converted experimental YOLOv8 PyTorch models into optimized **ONNX** format wrapped in a **FastAPI** service, ready for scalable deployment. |
-| **Troubleshoot & improve reliability** | Designed the system to be resilient to data drift (a common production failure mode) by building the automated retraining feedback loop. |
+| **Collaborate to transition prototypes to production** | Converted experimental YOLOv8 PyTorch models into optimized **ONNX** format wrapped in a **FastAPI** service with **hot-swap capabilities** for zero-downtime updates. |
+| **Troubleshoot & improve reliability** | Designed the system to be resilient to data drift (a common production failure mode) by building the automated retraining feedback loop, capable of **self-healing** in production. |
 | **Ensure security & scalability** | Used containerization (**Docker**) to isolate services and standard API interfaces, laying the groundwork for Kubernetes-based scaling. |
 
 ## 6. Future Roadmap

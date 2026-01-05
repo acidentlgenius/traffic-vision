@@ -37,9 +37,9 @@ graph TD
         F -->|Fetch Labels| G["2. Simulated Active Learning"]
         G -->|New Dataset| H["3. Retrain YOLOv8 Model"]
         H -->|New Weights| I["4. Register Model V2 (MLflow)"]
+        I -->|Trigger /reload| B
     end
 
-    I -->|Deploy| B
     classDef monitor fill:#ff9966,stroke:#333333,stroke-width:2px;
     classDef orchestrator fill:#00c7b7,stroke:#333333,stroke-width:2px;
     class D monitor;
@@ -160,6 +160,7 @@ We use **Evidently** to calculate statistical distance (Wasserstein distance) be
 For low latency (<50ms), we don't use heavy PyTorch containers.
 *   **Optimization**: Models are converted to **ONNX (Open Neural Network Exchange)**.
 *   **App**: A lightweight FastAPI wrapper serves the `.onnx` model.
+*   **Zero Downtime**: Supports hot-swapping models via `/reload` endpoint without container restarts.
 
 ---
 
