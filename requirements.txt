@@ -1,0 +1,8 @@
+dvc
+mlflow
+pandas
+scikit-learn
+ultralytics
+onnx
+onnxruntime
+evidently
