@@ -8,3 +8,10 @@ __pycache__/
 /data/processed
 /models
 mlruns/
+
+*.log
+mlflow.db
+runs/
+reports/
+*.pt
+data.yaml

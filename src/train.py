@@ -2,6 +2,10 @@ from ultralytics import YOLO
 import mlflow
 import os
 from pathlib import Path
+from ultralytics import settings
+
+# Disable Ultralytics auto-logging to MLflow to avoid conflicts with our explicit control
+settings.update({"mlflow": False, "wandb": False})
 
 # Paths
 DATA_DIR = Path("data/raw")
@@ -30,11 +34,18 @@ def train_model():
         
         # Train
         # Note: YOLOv8 usually expects a data.yaml file. We need to create one dynamically or use the folder structure if supported.
-        # For this MVP, let's create a simple data.yaml
+        # Update data.yaml to point to new structure
+        # YOLO expects 'path' to be root, and train/val relative to it OR 'train' as absolute path to images
+        # Simplest is:
+        # train: /abs/path/to/data/raw/images/train
+        # val: /abs/path/to/data/raw/images/train (same for mvp)
+        
+        base_path = os.path.abspath("data/raw")
+        
         yaml_content = f"""
-        path: {os.path.abspath(DATA_DIR)}
-        train: day
-        val: day  # Using same for val in MVP just to make it run, in real life split it
+        path: {base_path}
+        train: images/train
+        val: images/train
         names:
           0: person
           1: bicycle

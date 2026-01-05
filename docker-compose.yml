@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src:/app/src
+      - ./inference.log:/app/inference.log
+    environment:
+      - MODEL_PATH=models/best.onnx
+
+  prometheus:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    # volumes:
+    #   - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus

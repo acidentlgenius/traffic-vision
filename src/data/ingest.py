@@ -6,11 +6,8 @@ from pathlib import Path
 
 # Paths
 RAW_DIR = Path("data/raw")
-TRAIN_DIR = RAW_DIR / "day"
-DRIFT_DIR = RAW_DIR / "night"
-
-# Ensure directories exist
-TRAIN_DIR.mkdir(parents=True, exist_ok=True)
+# TRAIN_DIR not used directly as global anymore, specific functions manage subdirs
+DRIFT_DIR = RAW_DIR / "images/drift"
 DRIFT_DIR.mkdir(parents=True, exist_ok=True)
 
 def download_coco128():
@@ -23,17 +20,32 @@ def download_coco128():
     url = 'https://github.com/ultralytics/yolov5/releases/download/v1.0/coco128.zip'
     download(url, dir='.')
     
-    # Move images
+    # Move images & labels
     src_img_dir = Path('coco128/images/train2017')
-    # For MVP, just move all of them to 'day' to serve as our 'baseline'
-    # In a real scenario we'd filter, but COCO128 is small enough
+    src_lbl_dir = Path('coco128/labels/train2017')
+    
+    # Destination structure for YOLO
+    # data/raw/images/train
+    # data/raw/labels/train
+    
+    dest_img_dir = Path("data/raw/images/train")
+    dest_lbl_dir = Path("data/raw/labels/train")
+    
+    dest_img_dir.mkdir(parents=True, exist_ok=True)
+    dest_lbl_dir.mkdir(parents=True, exist_ok=True)
+
     if src_img_dir.exists():
         for img in src_img_dir.glob("*.jpg"):
-            shutil.copy(img, TRAIN_DIR / img.name)
+            shutil.copy(img, dest_img_dir / img.name)
+            # Copy corresponding label
+            label_name = img.stem + ".txt"
+            label_path = src_lbl_dir / label_name
+            if label_path.exists():
+                shutil.copy(label_path, dest_lbl_dir / label_name)
         
     # Clean up
     shutil.rmtree('coco128', ignore_errors=True)
-    print(f"Moved {len(list(TRAIN_DIR.glob('*')))} images to {TRAIN_DIR}")
+    print(f"Moved images/labels to {dest_img_dir} and {dest_lbl_dir}")
 
 def download_night_samples():
     """Downloads a few night time street scenes to simulate drift."""
