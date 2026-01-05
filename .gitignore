@@ -8,6 +8,7 @@ __pycache__/
 /data/processed
 /models
 mlruns/
+logs/
 
 *.log
 mlflow.db
@@ -15,3 +16,4 @@ runs/
 reports/
 *.pt
 data.yaml
+coco128.zip

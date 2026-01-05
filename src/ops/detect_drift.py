@@ -3,6 +3,7 @@ import json
 import logging
 import scipy.stats as stats
 import os
+import subprocess
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -72,7 +73,14 @@ def run_drift_check():
     logging.info(json.dumps(result, indent=2))
     
     if drift_detected:
-        print("DRIFT_DETECTED")
+        print("DRIFT_DETECTED: Triggering Retraining Pipeline...")
+        # Trigger Airflow DAG via Docker exec
+        try:
+            cmd = "docker exec traffic-vision-airflow-webserver-1 airflow dags trigger retraining_pipeline"
+            subprocess.run(cmd, shell=True, check=True)
+            print("Successfully triggered 'retraining_pipeline' DAG.")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to trigger DAG: {e}")
         
     return drift_detected
 

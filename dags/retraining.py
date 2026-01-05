@@ -1,21 +1,12 @@
 from airflow import DAG
-from airflow.operators.python import PythonOperator
+from airflow.providers.docker.operators.docker import DockerOperator
+from airflow.operators.bash import BashOperator
 from airflow.utils.dates import days_ago
 from datetime import timedelta
-import logging
-
-# In a real setup, we'd import the actual functions from src.train and src.data.ingest
-# For MVP, we'll inline or mock the calls to show the structure
-# OR better: use BashOperator to run the scripts we already made.
-
-def check_drift():
-    logging.info("Checking for data drift...")
-    # Real logic: Query Evidently service or check drift report
-    # Return True if drift detected
-    return True
+from docker.types import Mount
 
 default_args = {
-    'owner': 'traffic-vision',
+    'owner': 'airflow',
     'depends_on_past': False,
     'email_on_failure': False,
     'email_on_retry': False,
@@ -24,39 +15,45 @@ default_args = {
 }
 
 with DAG(
-    'traffic_vision_retrain',
+    'retraining_pipeline',
     default_args=default_args,
-    description='Retraining pipeline triggered by drift or schedule',
-    schedule_interval=timedelta(days=1),
+    description='A simple retraining pipeline triggered by drift',
+    schedule_interval=None, # Triggered externally by Evidently script or API
     start_date=days_ago(1),
-    tags=['mlops', 'vision'],
+    tags=['mlops', 'traffic-vision'],
 ) as dag:
 
-    ingest_new_data = PythonOperator(
-        task_id='ingest_new_data',
-        python_callable=lambda: logging.info("Ingesting new data (simulated Active Learning)...")
-        # In real life: fetch new labeled data from labeling tool
+    # Task 1: Check Data (Placeholder - could be DVC pull)
+    validate_data = BashOperator(
+        task_id='validate_data_integrity',
+        bash_command='echo "Data integrity check passed (Simulated)"'
     )
 
-    train_model = PythonOperator(
-        task_id='train_model',
-        # In real life: ./venv/bin/python src/train.py
-        python_callable=lambda: logging.info("Training model...")
+    # Task 2: Train Model using Docker
+    # We use the same image we built for the API, but run the training script
+    train_model = DockerOperator(
+        task_id='train_yolov8',
+        image='traffic-vision-api:latest',
+        api_version='auto',
+        auto_remove=True,
+        command='python src/train.py',
+        docker_url='unix://var/run/docker.sock',
+        mount_tmp_dir=False, # Fix for Mac Docker bind issue
+        network_mode='traffic-vision_default', # Connect to same network if needed
+        mounts=[
+            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/data', target='/app/data', type='bind'),
+            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/models', target='/app/models', type='bind'),
+            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/mlruns', target='/app/mlruns', type='bind'),
+        ],
+        # environment={
+        #    'MLFLOW_TRACKING_URI': 'http://host.docker.internal:5000' 
+        # }
     )
 
-    validate_model = PythonOperator(
-        task_id='validate_model',
-        python_callable=lambda: logging.info("Validating model against holdout set...")
+    # Task 3: Notify/Register (Placeholder)
+    notify_success = BashOperator(
+        task_id='notify_completion',
+        bash_command='echo "Model trained and registered successfully!"'
     )
 
-    register_model = PythonOperator(
-        task_id='register_model',
-        python_callable=lambda: logging.info("Registering new model version to MLflow...")
-    )
-
-    deploy_model = PythonOperator(
-        task_id='deploy_model',
-        python_callable=lambda: logging.info("Triggering deployment (CD)...")
-    )
-
-    ingest_new_data >> train_model >> validate_model >> register_model >> deploy_model
+    validate_data >> train_model >> notify_success

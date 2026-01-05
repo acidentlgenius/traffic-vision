@@ -3,6 +3,7 @@ version: '3.8'
 services:
   api:
     build: .
+    image: traffic-vision-api:latest
     ports:
       - "8000:8000"
     volumes:
@@ -15,8 +16,6 @@ services:
     image: prom/prometheus
     ports:
       - "9090:9090"
-    # volumes:
-    #   - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana
@@ -24,3 +23,65 @@ services:
       - "3001:3000"
     depends_on:
       - prometheus
+
+  # AIRFLOW SERVICES
+  postgres:
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  airflow-webserver:
+    image: apache/airflow:2.8.0
+    command: webserver
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=true
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - AIRFLOW__WEBSERVER__SECRET_KEY=traffic_vision_secret_key_2024
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock # For DockerOperator
+    depends_on:
+      - postgres
+      - airflow-init
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.0
+    command: scheduler
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - AIRFLOW__CORE__LOAD_EXAMPLES=false
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./data:/opt/airflow/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    user: "0:0" # Run as root to access docker sock (Not recommended for prod, okay for MVP demo)
+    depends_on:
+      - postgres
+      - airflow-init
+
+  airflow-init:
+    image: apache/airflow:2.8.0
+    command: version
+    environment:
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
+      - _AIRFLOW_DB_UPGRADE=true
+      - _AIRFLOW_WWW_USER_CREATE=true
+      - _AIRFLOW_WWW_USER_USERNAME=admin
+      - _AIRFLOW_WWW_USER_PASSWORD=admin
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

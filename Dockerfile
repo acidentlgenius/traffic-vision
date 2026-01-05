@@ -22,7 +22,7 @@ RUN pip install --force-reinstall opencv-python-headless
 
 
 
-COPY src/app.py src/
+COPY src/ src/
 # Copy the model we verified exists locally
 COPY models/best.onnx models/best.onnx
 
