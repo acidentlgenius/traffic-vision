@@ -31,6 +31,14 @@ with DAG(
 
     # Task 2: Train Model using Docker
     # We use the same image we built for the API, but run the training script
+    import os
+
+    # Get the host project root from environment variables (passed via docker-compose)
+    HOST_PROJECT_ROOT = os.getenv("HOST_PROJECT_ROOT")
+    
+    if not HOST_PROJECT_ROOT:
+        raise ValueError("HOST_PROJECT_ROOT environment variable is not set. Cannot mount volumes.")
+
     train_model = DockerOperator(
         task_id='train_yolov8',
         image='traffic-vision-api:latest',
@@ -41,9 +49,9 @@ with DAG(
         mount_tmp_dir=False, # Fix for Mac Docker bind issue
         network_mode='traffic-vision_default', # Connect to same network if needed
         mounts=[
-            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/data', target='/app/data', type='bind'),
-            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/models', target='/app/models', type='bind'),
-            Mount(source='/Users/abhinavmaurya/Projects/Embitel/traffic-vision/mlruns', target='/app/mlruns', type='bind'),
+            Mount(source=f'{HOST_PROJECT_ROOT}/data', target='/app/data', type='bind'),
+            Mount(source=f'{HOST_PROJECT_ROOT}/models', target='/app/models', type='bind'),
+            Mount(source=f'{HOST_PROJECT_ROOT}/mlruns', target='/app/mlruns', type='bind'),
         ],
         # environment={
         #    'MLFLOW_TRACKING_URI': 'http://host.docker.internal:5000' 

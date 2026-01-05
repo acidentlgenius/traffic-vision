@@ -61,6 +61,7 @@ services:
       - AIRFLOW__CORE__EXECUTOR=LocalExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres/airflow
       - AIRFLOW__CORE__LOAD_EXAMPLES=false
+      - HOST_PROJECT_ROOT=${PWD} # Pass the host path for DockerOperator mounts
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
